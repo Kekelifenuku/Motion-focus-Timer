@@ -9,9 +9,16 @@ import SwiftUI
 
 @main
 struct Motion_focus_TimerApp: App {
+    @StateObject private var sessionManager = SessionManager()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(sessionManager)
+                .onAppear {
+                    sessionManager.requestNotificationPermission()
+                    sessionManager.restoreSession()
+                }
         }
     }
 }
