@@ -554,6 +554,8 @@ struct ContentView: View {
 struct InactiveView: View {
     @EnvironmentObject var sessionManager: SessionManager
     @State private var selectedDuration: TimeInterval = 1500
+    @State private var currentQuoteIndex = 0
+    @State private var isAnimatingQuote = false
     
     private let durations: [(String, TimeInterval)] = [
         ("15 min", 900),
@@ -563,16 +565,35 @@ struct InactiveView: View {
         ("90 min", 5400)
     ]
     
+    private let motivationalQuotes = [
+        "Discipline is choosing between what you want now and what you want most.",
+        "Small daily disciplines compound into remarkable results.",
+        "Discipline is the bridge between goals and accomplishment.",
+        "Self-discipline begins with mastery of your thoughts.",
+        "Discipline is doing what needs to be done, even when you don't want to.",
+        "Consistent discipline creates lasting freedom.",
+        "Discipline is the foundation upon which all success is built.",
+        "The pain of discipline is less than the pain of regret.",
+        "Discipline is remembering what you want.",
+        "Master your minutes, master your life.",
+        "Discipline equals freedom.",
+        "Routine sets the stage for excellence.",
+        "Discipline is the highest form of self-love.",
+        "No discipline, no destiny.",
+        "Discipline is the soul of productivity.",
+        "Consistency is the hallmark of discipline.",
+        "Discipline turns talent into achievement.",
+        "Self-control is strength. Right thought is mastery.",
+        "Discipline is the key to unlocking potential.",
+        "Daily discipline creates extraordinary results."
+    ]
+    
     var body: some View {
         VStack(spacing: 32) {
             Spacer()
             
             VStack(spacing: 8) {
-                Image(systemName: "brain.head.profile")
-                    .font(.system(size: 60))
-                    .foregroundColor(.blue)
-                
-                Text("Focus Timer")
+                Text("Owl Focus")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 
@@ -582,6 +603,59 @@ struct InactiveView: View {
                     .multilineTextAlignment(.center)
             }
             
+            // Motivational Quote Card
+            VStack(spacing: 16) {
+                HStack {
+                    Image(systemName: "quote.opening")
+                        .font(.caption)
+                        .foregroundColor(.blue.opacity(0.7))
+                    
+                    Spacer()
+                    
+                    Image(systemName: "quote.closing")
+                        .font(.caption)
+                        .foregroundColor(.blue.opacity(0.7))
+                }
+                
+                Text(motivationalQuotes[currentQuoteIndex])
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(6)
+                    .padding(.horizontal)
+                    .opacity(isAnimatingQuote ? 1 : 0)
+                    .offset(y: isAnimatingQuote ? 0 : 10)
+                    .onTapGesture {
+                        cycleQuote()
+                    }
+                
+                Button(action: cycleQuote) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.caption)
+                        Text("New inspiration")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.blue)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(20)
+                }
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.blue.opacity(0.2), lineWidth: 1)
+                    )
+            )
+            .padding(.horizontal)
+            
             Spacer()
             
             VStack(spacing: 16) {
@@ -590,7 +664,7 @@ struct InactiveView: View {
                 
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
                     ForEach(durations, id: \.0) { name, duration in
-                        DurationButton(
+                        FocusDurationButton(
                             name: name,
                             duration: duration,
                             isSelected: selectedDuration == duration
@@ -617,7 +691,7 @@ struct InactiveView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: 16)
                             .fill(.blue)
                     )
                 }
@@ -633,11 +707,69 @@ struct InactiveView: View {
             Spacer()
         }
         .padding()
+        .onAppear {
+            // Start with a random quote
+            currentQuoteIndex = Int.random(in: 0..<motivationalQuotes.count)
+            withAnimation(.easeInOut(duration: 0.8)) {
+                isAnimatingQuote = true
+            }
+            
+            // Auto-cycle quotes every 30 seconds
+            startQuoteTimer()
+        }
         .onChange(of: sessionManager.showingSetupModal) { showing in
             if showing {
-                // Pass selected duration to setup modal
                 sessionManager.selectedDuration = selectedDuration
             }
+        }
+    }
+    
+    private func cycleQuote() {
+        withAnimation(.easeOut(duration: 0.3)) {
+            isAnimatingQuote = false
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            var newIndex = currentQuoteIndex
+            while newIndex == currentQuoteIndex {
+                newIndex = Int.random(in: 0..<motivationalQuotes.count)
+            }
+            currentQuoteIndex = newIndex
+            
+            withAnimation(.easeIn(duration: 0.5)) {
+                isAnimatingQuote = true
+            }
+        }
+    }
+    
+    private func startQuoteTimer() {
+        Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
+            cycleQuote()
+        }
+    }
+}
+
+struct FocusDurationButton: View {
+    let name: String
+    let duration: TimeInterval
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(name)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(isSelected ? .white : .primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isSelected ? Color.blue : Color(.systemBackground))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
+                )
         }
     }
 }
@@ -671,6 +803,7 @@ struct SetupModalView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedDuration: TimeInterval = 1500
     @State private var didPlacePhone = false
+    @State private var isAnimating = false
     
     private let durations: [(String, TimeInterval)] = [
         ("15 min", 900),
@@ -681,100 +814,188 @@ struct SetupModalView: View {
     ]
     
     var body: some View {
-        VStack(spacing: 32) {
-            VStack(spacing: 16) {
-                Image(systemName: "iphone")
-                    .font(.system(size: 80))
-                    .foregroundColor(.blue)
+        NavigationView {
+            VStack(spacing: 24) {
+                // Header
+                VStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.1))
+                            .frame(width: 100, height: 100)
+                        
+                        Image(systemName: "iphone.gen2")
+                            .font(.system(size: 40, weight: .bold))
+                            .foregroundColor(.blue)
+                            .scaleEffect(isAnimating ? 1.1 : 1.0)
+                    }
+                    
+                    VStack(spacing: 8) {
+                        Text("Prepare for Focus")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        
+                        Text("Choose your duration and focus")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(4)
+                    }
+                }
+                .padding(.top, 8)
                 
-                Text("Setup Focus Session")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                Text("Choose your duration and prepare your workspace for deep focus.")
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-            
-            VStack(spacing: 16) {
-                Text("Session Duration")
-                    .font(.headline)
-                
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
-                    ForEach(durations, id: \.0) { name, duration in
-                        DurationButton(
-                            name: name,
-                            duration: duration,
-                            isSelected: selectedDuration == duration
-                        ) {
-                            selectedDuration = duration
+                // Duration Selection
+                VStack(spacing: 16) {
+                    Text("Session Duration")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 4)
+                    
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
+                        ForEach(durations, id: \.0) { name, duration in
+                            FocusDurationButton(
+                                name: name,
+                                duration: duration,
+                                isSelected: selectedDuration == duration
+                            ) {
+                                withAnimation(.spring(response: 0.3)) {
+                                    selectedDuration = duration
+                                }
+                            }
                         }
                     }
                 }
-            }
-            .padding(.horizontal)
-            
-            Divider()
-            
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Preparation Steps:")
-                    .font(.headline)
+                .padding(.horizontal)
                 
-                InstructionRow(
-                    icon: "arrow.down.circle.fill",
-                    text: "Turn your phone face-down"
-                )
-                InstructionRow(
-                    icon: "table",
-                    text: "Place on a stable surface"
-                )
-                InstructionRow(
-                    icon: "bell.slash.fill",
-                    text: "Movement will trigger gentle warnings"
-                )
+                Divider()
+                    .padding(.vertical, 8)
+                
+                // Preparation Steps
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Preparation Checklist")
+                        .font(.headline)
+                        .padding(.horizontal, 4)
+                    
+                    VStack(spacing: 16) {
+                        SetupInstructionRow(
+                            icon: "iphone.gen2",
+                            text: "Place phone face-Up on stable surface",
+                            isCompleted: didPlacePhone
+                        )
+                        
+                        SetupInstructionRow(
+                            icon: "bell.slash",
+                            text: "Movement will trigger gentle reminders",
+                            isCompleted: didPlacePhone
+                        )
+                        
+                        SetupInstructionRow(
+                            icon: "eye.slash",
+                            text: "Avoid distractions during your session",
+                            isCompleted: didPlacePhone
+                        )
+                    }
+                    .padding(.horizontal, 4)
+                }
+                
+                Spacer()
+                
+                // Action Buttons
+                VStack(spacing: 12) {
+                    if !didPlacePhone {
+                        Button(action: {
+                            withAnimation(.spring(response: 0.4)) {
+                                didPlacePhone = true
+                            }
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "checkmark.circle.fill")
+                                Text("Phone is Face-Up")
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.blue)
+                                    .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                            )
+                        }
+                    } else {
+                        Button(action: {
+                            sessionManager.startSession(duration: selectedDuration)
+                            dismiss()
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "play.fill")
+                                Text("Start \(Int(selectedDuration/60))-Minute\nSession")
+                                    .fontWeight(.semibold)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.green)
+                                    .shadow(color: .green.opacity(0.3), radius: 8, x: 0, y: 4)
+                            )
+                        }
+                    }
+                    
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.secondary)
+                    .padding(.top, 8)
+                }
+                .padding(.horizontal)
             }
-            .padding(.horizontal)
+            .padding()
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                isAnimating = true
+            }
+        }
+    }
+}
+
+struct SetupInstructionRow: View {
+    let icon: String
+    let text: String
+    let isCompleted: Bool
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundColor(isCompleted ? .green : .blue)
+                .frame(width: 24)
+            
+            Text(text)
+                .font(.body)
+                .foregroundColor(isCompleted ? .secondary : .primary)
+                .strikethrough(isCompleted)
+                .multilineTextAlignment(.leading)
             
             Spacer()
             
-            VStack(spacing: 16) {
-                if !didPlacePhone {
-                    Button("I've placed my phone face-down") {
-                        didPlacePhone = true
-                    }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(.blue)
-                    )
-                } else {
-                    Button("Start \(Int(selectedDuration/60))-Minute Session") {
-                        sessionManager.startSession(duration: selectedDuration)
-                        dismiss()
-                    }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(.green)
-                    )
-                }
-                
-                Button("Cancel") {
-                    dismiss()
-                }
-                .foregroundColor(.secondary)
+            if isCompleted {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                    .font(.system(size: 20))
             }
-            .padding(.horizontal)
         }
-        .padding()
+        .padding(.vertical, 8)
     }
 }
 
@@ -801,73 +1022,191 @@ struct InstructionRow: View {
 // MARK: - Active Timer View
 struct ActiveTimerView: View {
     @EnvironmentObject var sessionManager: SessionManager
+    @State private var isPulsing = false
     
     var body: some View {
-        VStack(spacing: 40) {
-            Spacer()
-            
-            VStack(spacing: 8) {
-                Text("Focus Session Active")
-                    .font(.headline)
-                    .foregroundColor(.green)
+        VStack(spacing: 32) {
+            // Header
+            VStack(spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.green)
+                    
+                    Text("Focus Session Active")
+                        .font(.headline)
+                        .foregroundColor(.green)
+                }
                 
-                Text("Keep your phone face-down")
+                Text("Please Avoid your Phone and maintain focus")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
             }
+            .padding(.top, 20)
             
+            // Progress Circle
             if let session = sessionManager.currentSession {
                 ZStack {
+                    // Background circle
                     Circle()
-                        .stroke(Color(.systemGray5), lineWidth: 8)
+                        .stroke(Color(.systemGray5), lineWidth: 12)
                         .frame(width: 280, height: 280)
                     
+                    // Progress circle
                     Circle()
                         .trim(from: 0, to: session.progress)
-                        .stroke(.blue, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .stroke(
+                            AngularGradient(
+                                gradient: Gradient(colors: [.blue, .purple, .blue]),
+                                center: .center,
+                                startAngle: .degrees(0),
+                                endAngle: .degrees(360)
+                            ),
+                            style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                        )
                         .frame(width: 280, height: 280)
                         .rotationEffect(.degrees(-90))
                         .animation(.linear(duration: 1), value: session.progress)
                     
-                    VStack(spacing: 8) {
+                    // Time display
+                    VStack(spacing: 4) {
                         Text(formatTime(session.remainingTime))
-                            .font(.system(size: 48, weight: .light, design: .rounded))
+                            .font(.system(size: 52, weight: .semibold, design: .rounded))
                             .monospacedDigit()
+                            .foregroundColor(.primary)
                         
                         Text("remaining")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+                        
+                        // Progress percentage
+                        Text("\(Int(session.progress * 100))% complete")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 4)
                     }
                 }
             }
             
+            // Stats
             if let session = sessionManager.currentSession {
-                HStack(spacing: 32) {
-                    StatView(
+                HStack(spacing: 40) {
+                    TimerStatView(
+                        icon: "clock.fill",
                         label: "Duration",
-                        value: "\(Int(session.duration/60)) min"
+                        value: "\(Int(session.duration/60)) min",
+                        color: .blue
                     )
                     
-                    StatView(
+                    Divider()
+                        .frame(height: 40)
+                    
+                    TimerStatView(
+                        icon: "exclamationmark.triangle.fill",
                         label: "Interruptions",
-                        value: "\(session.interruptionCount)"
+                        value: "\(session.interruptionCount)",
+                        color: session.interruptionCount > 0 ? .orange : .green
                     )
                 }
+                .padding(.horizontal, 40)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(.systemBackground))
+                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                )
+                .padding(.horizontal)
             }
             
             Spacer()
             
-            Button("End Session") {
+          
+            
+            // End Session Button
+            Button(action: {
                 sessionManager.beginQuitSession()
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "xmark.circle.fill")
+                    Text("End Session")
+                }
+                .font(.body.weight(.medium))
+                .foregroundColor(.red)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(
+                    Capsule()
+                        .fill(Color.red.opacity(0.1))
+                )
             }
-            .font(.footnote)
-            .foregroundColor(.red)
-            .padding(.bottom)
+            .padding(.bottom, 20)
         }
         .padding()
+        .background(
+            Color(.systemGroupedBackground)
+                .ignoresSafeArea()
+        )
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                isPulsing = true
+            }
+        }
+    }
+    
+    private func formatTime(_ time: TimeInterval) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%02d:%02d", minutes, seconds)
     }
 }
 
+// Renamed to avoid conflict with existing StatView
+struct TimerStatView: View {
+    let icon: String
+    let label: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundColor(color)
+            
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+            
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
+struct TipView: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundColor(.blue)
+                .frame(width: 32, height: 32)
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(8)
+            
+            Text(text)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(width: 60)
+        }
+    }
+}
 // MARK: - Stat View
 struct StatView: View {
     let label: String
