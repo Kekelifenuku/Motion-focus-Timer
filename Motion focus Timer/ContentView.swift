@@ -1655,7 +1655,12 @@ struct OnboardingView: View {
                         Text("• iOS 16.0 or later\n• Device with accelerometer (all modern iPhones)\n• Notifications permission (optional, for session completion alerts)")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+                        
+                        Link("Learn more: appgallery.io/Keli", destination: URL(string: "https://appgallery.io/Keli")!)
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
                     }
+
                 }
                 .padding()
             }
