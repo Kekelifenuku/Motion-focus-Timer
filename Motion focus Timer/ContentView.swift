@@ -1656,7 +1656,7 @@ struct OnboardingView: View {
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         
-                        Link("Learn more: appgallery.io/Keli", destination: URL(string: "https://appgallery.io/Keli")!)
+                        Link("My Other Apps", destination: URL(string: "https://appgallery.io/Keli")!)
                             .font(.subheadline)
                             .foregroundColor(.blue)
                     }
