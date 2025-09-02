@@ -543,6 +543,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $sessionManager.showingSetupModal) {
             SetupModalView()
+                .presentationDetents([.large])
+
+                      .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $sessionManager.showingOnboarding) {
             OnboardingView()
@@ -798,6 +801,8 @@ struct DurationButton: View {
 }
 
 // MARK: - Setup Modal
+
+
 struct SetupModalView: View {
     @EnvironmentObject var sessionManager: SessionManager
     @Environment(\.dismiss) private var dismiss
@@ -816,32 +821,8 @@ struct SetupModalView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
-                // Header
-                VStack(spacing: 16) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.blue.opacity(0.1))
-                            .frame(width: 100, height: 100)
-                        
-                        Image(systemName: "iphone.gen2")
-                            .font(.system(size: 40, weight: .bold))
-                            .foregroundColor(.blue)
-                            .scaleEffect(isAnimating ? 1.1 : 1.0)
-                    }
-                    
-                    VStack(spacing: 8) {
-                        Text("Prepare for Focus")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        Text("Choose your duration and focus")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(4)
-                    }
-                }
-                .padding(.top, 8)
+                
+                
                 
                 // Duration Selection
                 VStack(spacing: 16) {
@@ -901,53 +882,51 @@ struct SetupModalView: View {
                 
                 // Action Buttons
                 VStack(spacing: 12) {
-                    if !didPlacePhone {
-                        Button(action: {
-                            withAnimation(.spring(response: 0.4)) {
-                                didPlacePhone = true
-                            }
-                        }) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "checkmark.circle.fill")
-                                Text("Phone is Face-Up")
-                                    .fontWeight(.semibold)
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.blue)
-                                    .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
-                            )
+                    
+                    // Checklist confirmation
+                    Button(action: {
+                        withAnimation(.spring(response: 0.4)) {
+                            didPlacePhone.toggle()
                         }
-                    } else {
-                        Button(action: {
-                            sessionManager.startSession(duration: selectedDuration)
-                            dismiss()
-                        }) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "play.fill")
-                                Text("Start \(Int(selectedDuration/60))-Minute\nSession")
-                                    .fontWeight(.semibold)
-                                    .multilineTextAlignment(.center)
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.green)
-                                    .shadow(color: .green.opacity(0.3), radius: 8, x: 0, y: 4)
-                            )
+                    }) {
+                        HStack(spacing: 12) {
+                            Image(systemName: didPlacePhone ? "checkmark.circle.fill" : "circle")
+                            Text(didPlacePhone ? "Phone Confirmed" : "Phone is Face-Up")
+                                .fontWeight(.semibold)
                         }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(didPlacePhone ? Color.green : Color.blue)
+                                .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                        )
                     }
                     
-                    Button("Cancel") {
+                    // Start Session button (always visible)
+                    Button(action: {
+                        sessionManager.startSession(duration: selectedDuration)
                         dismiss()
+                    }) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "play.fill")
+                            Text("Start \(Int(selectedDuration/60))-Minute Session")
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(didPlacePhone ? Color.green : Color.gray)
+                                .shadow(color: .green.opacity(0.3), radius: 8, x: 0, y: 4)
+                        )
                     }
-                    .foregroundColor(.secondary)
-                    .padding(.top, 8)
+                    .disabled(!didPlacePhone)
+                    
+                    
+                    
                 }
                 .padding(.horizontal)
             }
@@ -969,6 +948,7 @@ struct SetupModalView: View {
     }
 }
 
+// Checklist Row Component
 struct SetupInstructionRow: View {
     let icon: String
     let text: String
@@ -998,6 +978,7 @@ struct SetupInstructionRow: View {
         .padding(.vertical, 8)
     }
 }
+
 
 // MARK: - Instruction Row
 struct InstructionRow: View {
