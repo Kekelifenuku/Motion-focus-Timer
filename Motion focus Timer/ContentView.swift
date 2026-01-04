@@ -1558,103 +1558,217 @@ struct StatCard: View {
 }
 
 // MARK: - Onboarding View
+import SwiftUI
+
 struct OnboardingView: View {
     @EnvironmentObject var sessionManager: SessionManager
     @Environment(\.dismiss) private var dismiss
+    @State private var showPrivacyDetails = false
     
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Privacy & How It Works")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+                VStack(alignment: .leading, spacing: 32) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Welcome to Focus Timer")
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundColor(.primary)
                         
-                        Text("Focus Timer helps you maintain deep focus by gently discouraging phone usage during work sessions.")
+                        Text("Build better focus habits with gentle reminders that help you stay on track.")
                             .font(.body)
                             .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    .padding(.top, 8)
                     
+                    // How It Works
                     FeatureSection(
                         title: "How It Works",
+                        accentColor: .blue,
                         items: [
                             FeatureItem(
                                 icon: "timer",
-                                title: "Set Your Focus Time",
-                                description: "Choose from 15 minutes to 90 minutes of focused work time."
+                                title: "Set Focus Time",
+                                description: "Choose from 15 to 90 minutes of focused work time"
                             ),
                             FeatureItem(
-                                icon: "iphone.radiowaves.left.and.right",
+                                icon: "iphone.gen3",
                                 title: "Motion Detection",
-                                description: "When you pick up your phone, you'll get a gentle reminder to stay focused."
+                                description: "Gentle reminders when you pick up your phone"
                             ),
                             FeatureItem(
-                                icon: "speaker.wave.2.fill",
+                                icon: "speaker.wave.2",
                                 title: "Audio Feedback",
-                                description: "Spoken reminders help you stay on track without looking at the screen."
+                                description: "Spoken reminders keep you on track"
                             ),
                             FeatureItem(
-                                icon: "lock.shield",
-                                title: "Thoughtful Friction",
-                                description: "If you need to quit early, a small challenge helps you make an intentional choice."
+                                icon: "brain.head.profile",
+                                title: "Intentional Choices",
+                                description: "Thoughtful prompts for intentional breaks"
                             )
                         ]
                     )
                     
-                    FeatureSection(
-                        title: "Your Privacy",
-                        items: [
-                            FeatureItem(
-                                icon: "location.slash",
-                                title: "No Location Tracking",
-                                description: "Your location is never accessed or stored."
-                            ),
-                            FeatureItem(
-                                icon: "wifi.slash",
-                                title: "No Data Collection",
-                                description: "Motion data is only used locally during active sessions. Nothing is uploaded to servers."
-                            ),
-                            FeatureItem(
-                                icon: "moon.zzz",
-                                title: "No Background Monitoring",
-                                description: "Motion detection only works when the app is open and you're in an active session."
-                            ),
-                            FeatureItem(
-                                icon: "trash",
-                                title: "No Data Retention",
-                                description: "Session data is deleted when you complete or quit a session."
+                    // Privacy
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Image(systemName: "lock.shield.fill")
+                                .font(.title2)
+                                .foregroundColor(.green)
+                            
+                            Text("Privacy First")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            
+                            Spacer()
+                            
+                            Button {
+                                withAnimation(.spring()) {
+                                    showPrivacyDetails.toggle()
+                                }
+                            } label: {
+                                Image(systemName: showPrivacyDetails ? "chevron.up" : "chevron.down")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(8)
+                                    .background(Circle().fill(Color(.systemGray6)))
+                            }
+                        }
+                        
+                        if showPrivacyDetails {
+                            FeatureSection(
+                                title: "",
+                                accentColor: .green,
+                                items: [
+                                    FeatureItem(
+                                        icon: "location.slash.fill",
+                                        title: "No Location Data",
+                                        description: "We never access your location"
+                                    ),
+                                    FeatureItem(
+                                        icon: "externaldrive.slash",
+                                        title: "Local Processing",
+                                        description: "Motion data stays on your device"
+                                    ),
+                                    FeatureItem(
+                                        icon: "moon.zzz.fill",
+                                        title: "Active Sessions Only",
+                                        description: "No background monitoring"
+                                    ),
+                                    FeatureItem(
+                                        icon: "trash.slash.fill",
+                                        title: "No Data Retention",
+                                        description: "Session data is deleted immediately"
+                                    )
+                                ]
                             )
-                        ]
-                    )
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Device Requirements")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                        
-                        Text("• iOS 16.0 or later\n• Device with accelerometer (all modern iPhones)\n• Notifications permission (optional, for session completion alerts)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        
-                        Link("My Other Apps", destination: URL(string: "https://appgallery.io/Keli")!)
-                            .font(.subheadline)
-                            .foregroundColor(.blue)
+                            .padding(.vertical, 8)
+                        }
                     }
-
-                }
-                .padding()
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                    .padding(.vertical, 4)
+                    
+                    // Requirements & Links
+                    VStack(alignment: .leading, spacing: 24) {
+                        // Requirements
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.blue)
+                                Text("Device Requirements")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                RequirementRow(icon: "􀟏", text: "iOS 16.0 or later")
+                                RequirementRow(icon: "􀟜", text: "Modern iPhone with accelerometer")
+                                RequirementRow(icon: "􀌬", text: "Notifications permission (optional)")
+                            }
+                        }
+                        
+                        // Action Buttons
+                        VStack(spacing: 12) {
+                            Button(action: rateApp) {
+                                HStack {
+                                    Image(systemName: "star.fill")
+                                        .font(.caption)
+                                    Text("Rate the App")
+                                        .fontWeight(.medium)
+                                    Spacer()
+                                    Image(systemName: "arrow.up.forward")
+                                        .font(.caption2)
+                                }
+                                .foregroundColor(.primary)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(.systemGray6))
+                                )
+                            }
+                            
+                            Button(action: shareApp) {
+                                HStack {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .font(.caption)
+                                    Text("Share with Friends")
+                                        .fontWeight(.medium)
+                                    Spacer()
+                                    Image(systemName: "arrow.up.forward")
+                                        .font(.caption2)
+                                }
+                                .foregroundColor(.primary)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(.systemGray6))
+                                )
+                            }
+                            
+                            Link(destination: URL(string: "https://appgallery.io/Keli")!) {
+                                HStack {
+                                    Image(systemName: "app.gift")
+                                        .font(.caption)
+                                    Text("My Other Apps")
+                                        .fontWeight(.medium)
+                                    Spacer()
+                                    Image(systemName: "arrow.up.forward")
+                                        .font(.caption2)
+                                        .foregroundColor(.blue)
+                                }
+                                .foregroundColor(.blue)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                )
+                            }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    
+                    // Done Button (at bottom for easier access)
+                    Button {
                         sessionManager.completeOnboarding()
                         dismiss()
+                    } label: {
+                        Text("Get Started")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color.blue)
+                            )
                     }
-                    .fontWeight(.semibold)
+                    .padding(.top, 16)
+                    .padding(.bottom, 32)
                 }
+                .padding(.horizontal, 24)
             }
+            .navigationBarHidden(true)
         }
     }
 }
@@ -1662,19 +1776,85 @@ struct OnboardingView: View {
 // MARK: - Feature Section
 struct FeatureSection: View {
     let title: String
+    let accentColor: Color
     let items: [FeatureItem]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(title)
-                .font(.headline)
-                .fontWeight(.semibold)
+        VStack(alignment: .leading, spacing: 20) {
+            if !title.isEmpty {
+                Text(title)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .padding(.leading, 4)
+            }
             
-            VStack(spacing: 12) {
-                ForEach(items, id: \.title) { item in
-                    FeatureItemView(item: item)
+            VStack(spacing: 16) {
+                ForEach(items.indices, id: \.self) { index in
+                    FeatureItemView(item: items[index], accentColor: accentColor)
+                        .padding(.horizontal, 4)
                 }
             }
+        }
+    }
+}
+
+// MARK: - Feature Item View
+struct FeatureItemView: View {
+    let item: FeatureItem
+    let accentColor: Color
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(accentColor.opacity(0.1))
+                    .frame(width: 44, height: 44)
+                
+                Image(systemName: item.icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(accentColor)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text(item.description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineSpacing(2)
+            }
+            
+            Spacer()
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        )
+    }
+}
+
+// MARK: - Requirement Row
+struct RequirementRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(icon)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+            
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Spacer()
         }
     }
 }
@@ -1686,29 +1866,28 @@ struct FeatureItem {
     let description: String
 }
 
-// MARK: - Feature Item View
-struct FeatureItemView: View {
-    let item: FeatureItem
+// MARK: - Private Functions (keep these as-is)
+private func rateApp() {
+    let appID = "6751766120"
+    let urlString = "https://apps.apple.com/app/id\(appID)?action=write-review"
     
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: item.icon)
-                .font(.title2)
-                .foregroundColor(.blue)
-                .frame(width: 24)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text(item.description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-        }
+    if let url = URL(string: urlString) {
+        UIApplication.shared.open(url)
+    }
+}
+
+private func shareApp() {
+    let appID = "6751766120"
+    let url = URL(string: "https://apps.apple.com/app/id\(appID)")!
+    
+    let activityVC = UIActivityViewController(
+        activityItems: [url],
+        applicationActivities: nil
+    )
+    
+    if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+       let rootVC = scene.windows.first?.rootViewController {
+        rootVC.present(activityVC, animated: true)
     }
 }
 
